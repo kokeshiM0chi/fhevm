@@ -2,20 +2,29 @@ import '@nomicfoundation/hardhat-toolbox';
 import dotenv from 'dotenv';
 import * as fs from 'fs';
 import 'hardhat-deploy';
+import 'hardhat-ignore-warnings';
 import 'hardhat-preprocessor';
 import { TASK_PREPROCESS } from 'hardhat-preprocessor';
-import type { HardhatUserConfig } from 'hardhat/config';
+import type { HardhatUserConfig, extendProvider } from 'hardhat/config';
 import { task } from 'hardhat/config';
 import type { NetworkUserConfig } from 'hardhat/types';
 import { resolve } from 'path';
 import * as path from 'path';
 
+import CustomProvider from './CustomProvider';
+// Adjust the import path as needed
 import './tasks/accounts';
 import './tasks/getEthereumAddress';
 import './tasks/mint';
 import './tasks/taskDeploy';
+import './tasks/taskGatewayRelayer';
 import './tasks/taskIdentity';
-import './tasks/taskOracleRelayer';
+import './tasks/taskTFHE';
+
+extendProvider(async (provider, config, network) => {
+  const newProvider = new CustomProvider(provider);
+  return newProvider;
+});
 
 // Function to recursively get all .sol files in a folder
 function getAllSolidityFiles(dir: string, fileList: string[] = []): string[] {
@@ -122,9 +131,9 @@ task('test', async (taskArgs, hre, runSuper) => {
 
   if (network === 'hardhat') {
     // in fhevm mode all this block is done when launching the node via `pnmp fhevm:start`
-    const privKeyDeployer = process.env.PRIVATE_KEY_ORACLE_DEPLOYER;
-    const privKeyOwner = process.env.PRIVATE_KEY_ORACLE_OWNER;
-    const privKeyRelayer = process.env.PRIVATE_KEY_ORACLE_RELAYER;
+    const privKeyDeployer = process.env.PRIVATE_KEY_GATEWAY_DEPLOYER;
+    const privKeyOwner = process.env.PRIVATE_KEY_GATEWAY_OWNER;
+    const privKeyRelayer = process.env.PRIVATE_KEY_GATEWAY_RELAYER;
     const deployerAddress = new hre.ethers.Wallet(privKeyDeployer!).address;
     const ownerAddress = new hre.ethers.Wallet(privKeyOwner!).address;
     const relayerAddress = new hre.ethers.Wallet(privKeyRelayer!).address;
@@ -137,14 +146,14 @@ task('test', async (taskArgs, hre, runSuper) => {
     const p3 = hre.network.provider.send('hardhat_setBalance', [relayerAddress, bal]);
     await Promise.all([p1, p2, p3]);
     await hre.run('compile');
-    await hre.run('task:deployOracle', { privateKey: privKeyDeployer, ownerAddress: ownerAddress });
+    await hre.run('task:deployGateway', { privateKey: privKeyDeployer, ownerAddress: ownerAddress });
 
-    const parsedEnv = dotenv.parse(fs.readFileSync('oracle/.env.oracle'));
-    const oraclePredeployAddress = parsedEnv.ORACLE_CONTRACT_PREDEPLOY_ADDRESS;
+    const parsedEnv = dotenv.parse(fs.readFileSync('gateway/.env.gateway'));
+    const gatewayContractAddress = parsedEnv.GATEWAY_CONTRACT_PREDEPLOY_ADDRESS;
 
     await hre.run('task:addRelayer', {
       privateKey: privKeyOwner,
-      oracleAddress: oraclePredeployAddress,
+      gatewayAddress: gatewayContractAddress,
       relayerAddress: relayerAddress,
     });
   }
@@ -206,7 +215,7 @@ const config: HardhatUserConfig = {
     tests: './test',
   },
   solidity: {
-    version: '0.8.22',
+    version: '0.8.24',
     settings: {
       metadata: {
         // Not including the metadata hash
@@ -219,7 +228,12 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 800,
       },
-      evmVersion: 'shanghai',
+      evmVersion: 'cancun',
+    },
+  },
+  warnings: {
+    '*': {
+      'transient-storage': false,
     },
   },
   typechain: {

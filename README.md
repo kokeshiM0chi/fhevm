@@ -13,9 +13,15 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/zama-ai/fhevm/releases"><img src="https://img.shields.io/github/v/release/zama-ai/fhevm?style=flat-square"></a>
-  <a href="license"><img src="https://img.shields.io/badge/License-BSD--3--Clause--Clear-%23ffb243?style=flat-square"></a>
-  <a href="https://github.com/zama-ai/bounty-program"><img src="https://img.shields.io/badge/Contribute-Zama%20Bounty%20Program-%23ffd208?style=flat-square"></a>
+  <a href="https://github.com/zama-ai/fhevm/releases">
+    <img src="https://img.shields.io/github/v/release/zama-ai/fhevm?style=flat-square"></a>
+  <a href="https://github.com/zama-ai/fhevm/blob/main/LICENSE">
+    <!-- markdown-link-check-disable-next-line -->
+    <img src="https://img.shields.io/badge/License-BSD--3--Clause--Clear-%23ffb243?style=flat-square"></a>
+  <a href="https://github.com/zama-ai/bounty-program">
+    <!-- markdown-link-check-disable-next-line -->
+    <img src="https://img.shields.io/badge/Contribute-Zama%20Bounty%20Program-%23ffd208?style=flat-square"></a>
+  <a href="https://slsa.dev"><img alt="SLSA 3" src="https://slsa.dev/images/gh-badge-level3.svg" /></a>
 </p>
 
 ## About
@@ -104,28 +110,25 @@ _Find more details on implementation instructions in [this repository](https://g
 ```solidity
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import "fhevm/lib/TFHE.sol";
 
 contract Counter {
   euint32 counter;
 
-  function add(bytes calldata encryptedValue) public {
-    euint32 value = TFHE.asEuint32(encryptedValue);
-    counter = counter + value;
-  }
-
-  function getCounter(bytes32 publicKey) returns (bytes memory) {
-    return TFHE.reencrypt(counter, publicKey);
+  function add(einput valueInput, bytes calldata inputProof) public {
+    euint32 value = TFHE.asEuint32(valueInput, inputProof);
+    counter = TFHE.add(counter, value);
+    TFHE.allow(counter, address(this));
   }
 }
 ```
 
-_This example is explained in more detail in [here](https://github.com/zama-ai/fhevm/tree/main/examples)._
+_More examples are available [here](https://github.com/zama-ai/fhevm/tree/main/examples)._
 
 <p align="right">
-  <a href="#about" > ↑ Back to top </a> 
+  <a href="#about" > ↑ Back to top </a>
 </p>
 
 ## Resources
@@ -144,7 +147,7 @@ _This example is explained in more detail in [here](https://github.com/zama-ai/f
 
 #### Games:
 
-- [Ciperbomb](https://github.com/immortal-tofu/cipherbomb): A Hardhat-based template for developing Solidity smart contracts, with sensible defaults. - by Clément Danjou
+- [Cipherbomb](https://github.com/immortal-tofu/cipherbomb): A Hardhat-based template for developing Solidity smart contracts, with sensible defaults. - by Clément Danjou
 - [Battleship](https://github.com/battleship-fhevm/battleship-hardhat): A smart contract that replicates the classic Battleship game on a blockchain in a transparent manner. - by [Owen Murovec](https://github.com/omurovec)
 
 #### Others
@@ -171,7 +174,7 @@ _Explore more useful resources in [fhEVM tutorials](https://docs.zama.ai/fhevm/r
 Full, comprehensive documentation is available here: [https://docs.zama.ai/fhevm](https://docs.zama.ai/fhevm).
 
 <p align="right">
-  <a href="#about" > ↑ Back to top </a> 
+  <a href="#about" > ↑ Back to top </a>
 </p>
 
 ### Blockchain Implementation
@@ -215,7 +218,7 @@ test/tfheOperations/tfheOperations.ts
 ```
 
 <p align="right">
-  <a href="#about" > ↑ Back to top </a> 
+  <a href="#about" > ↑ Back to top </a>
 </p>
 
 #### Tests
@@ -288,7 +291,7 @@ npx hardhat test --network localNetwork1
 ```
 
 <p align="right">
-  <a href="#about" > ↑ Back to top </a> 
+  <a href="#about" > ↑ Back to top </a>
 </p>
 
 #### Adding new operators
@@ -316,7 +319,7 @@ Then open the file `coverage/index.html`. You can see there which line or branch
 > Due to intrinsic limitations of the original EVM, the mocked version differ in few corner cases from the real fhEVM, the most important change is the `TFHE.isInitialized` method which will always return `true` in the mocked version. Another big difference in mocked mode, compared to the real fhEVM implementation, is that there is no ciphertext verification neither checking that a ciphertext has been honestly obtained (see section 4 of the [whitepaper](https://github.com/zama-ai/fhevm/blob/main/fhevm-whitepaper.pdf)). This means that before deploying to production, developers still need to run the tests with the original fhEVM node, as a final check in non-mocked mode, with `npm run test`.
 
 <p align="right">
-  <a href="#about" > ↑ Back to top </a> 
+  <a href="#about" > ↑ Back to top </a>
 </p>
 
 ### Citations
@@ -355,10 +358,30 @@ Becoming an approved contributor involves signing our Contributor License Agreem
 
 ### License
 
-This software is distributed under the **BSD-3-Clause-Clear** license. If you have any questions, please contact us at hello@zama.ai.
+This software is distributed under the **BSD-3-Clause-Clear** license. Read [this](LICENSE) for more details.
+
+#### FAQ
+
+**Is Zama’s technology free to use?**
+
+> Zama’s libraries are free to use under the BSD 3-Clause Clear license only for development, research, prototyping, and experimentation purposes. However, for any commercial use of Zama's open source code, companies must purchase Zama’s commercial patent license.
+>
+> Everything we do is open source and we are very transparent on what it means for our users, you can read more about how we monetize our open source products at Zama in [this blog post](https://www.zama.ai/post/open-source).
+
+**What do I need to do if I want to use Zama’s technology for commercial purposes?**
+
+> To commercially use Zama’s technology you need to be granted Zama’s patent license. Please contact us at hello@zama.ai for more information.
+
+**Do you file IP on your technology?**
+
+> Yes, all Zama’s technologies are patented.
+
+**Can you customize a solution for my specific use case?**
+
+> We are open to collaborating and advancing the FHE space with our partners. If you have specific needs, please email us at hello@zama.ai.
 
 <p align="right">
-  <a href="#table-of-contents" > ↑ Back to top </a> 
+  <a href="#table-of-contents" > ↑ Back to top </a>
 </p>
 
 ## Support
@@ -374,5 +397,5 @@ This software is distributed under the **BSD-3-Clause-Clear** license. If you ha
 🌟 If you find this project helpful or interesting, please consider giving it a star on GitHub! Your support helps to grow the community and motivates further development.
 
 <p align="right">
-  <a href="#about" > ↑ Back to top </a> 
+  <a href="#about" > ↑ Back to top </a>
 </p>
